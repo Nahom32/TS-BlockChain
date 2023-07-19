@@ -1,6 +1,6 @@
 import sha256 from 'crypto-js/sha256';
 import { Block } from './Block';
-
+import {broadcastLatest} from './p2p';
 const calculate_hash = (index: number, previousHash: string|null, timestamp: number, data: string): string  =>{
     if(typeof(previousHash)=='string')
         return sha256(index + previousHash + timestamp + data).toString();
@@ -11,7 +11,7 @@ const calculate_hash = (index: number, previousHash: string|null, timestamp: num
 const genesisBlock = new Block(
     0, '816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7', null, 1465154705, 'my genesis block!!'
 );
-const blockchain: Block[] = [genesisBlock];
+let blockchain: Block[] = [genesisBlock];
 const getLatestBlock =():Block=>{
     return blockchain[blockchain.length-1];
 }
@@ -21,6 +21,7 @@ const generateNextBlock = (blockData: string) => {
     const nextTimestamp: number = new Date().getTime() / 1000;
     const nextHash: string = calculate_hash(nextIndex, previousBlock.hash, nextTimestamp, blockData);
     const newBlock: Block = new Block(nextIndex, nextHash, previousBlock.hash, nextTimestamp, blockData);
+    broadcastLatest();
     return newBlock;
 };
 const calculateHashForBlock = (block:Block): string =>{
@@ -62,3 +63,21 @@ const isValidChain = (blockchainToValidate: Block[]): boolean => {
     }
     return true;
 };
+
+const replaceChain = (newBlocks: Block[]) =>{
+    if(isValidChain(newBlocks) && newBlocks.length > blockchain.length){
+        blockchain = newBlocks;
+
+    }
+}
+const getBlockChain = (): Block[]=>{
+    return blockchain;
+}
+const addBlockToChain = (newBlock: Block) => {
+    if (isValidBlock(newBlock, getLatestBlock())) {
+        blockchain.push(newBlock);
+        return true;
+    }
+    return false;
+};
+export {calculateHashForBlock,generateNextBlock,replaceChain,isValidChain,getBlockChain,isValidBlockStructure,getLatestBlock,addBlockToChain}
