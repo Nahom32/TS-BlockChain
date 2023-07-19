@@ -27,7 +27,7 @@ const calculateHashForBlock = (block:Block): string =>{
     return calculate_hash(block.index,block.previousHash,block.timestamp,block.data);
 }
 const isGenesisBlock = (block:Block):boolean =>{
-    return blockchain[0].hash == block.hash && block.index == blockchain[0].index;
+    return JSON.stringify(block) == JSON.stringify(genesisBlock);
 }
 const isValidBlock = (previous_block:Block|null, new_block:Block): boolean =>{
     if(typeof(previous_block) == null){
@@ -41,3 +41,24 @@ const isValidBlock = (previous_block:Block|null, new_block:Block): boolean =>{
     
 
 }
+const isValidBlockStructure = (block: Block): boolean => {
+    return typeof block.index === 'number'
+        && typeof block.hash === 'string'
+        && typeof block.previousHash === 'string'
+        && typeof block.timestamp === 'number'
+        && typeof block.data === 'string';
+};
+const isValidChain = (blockchainToValidate: Block[]): boolean => {
+    
+
+    if (!isGenesisBlock(blockchainToValidate[0])) {
+        return false;
+    }
+
+    for (let i = 1; i < blockchainToValidate.length; i++) {
+        if (!isValidBlock(blockchainToValidate[i-1], blockchainToValidate[i])) {
+            return false;
+        }
+    }
+    return true;
+};
