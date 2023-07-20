@@ -138,4 +138,5 @@ const connectToPeers = (newPeer: string): void => {
     });
 };
 
+
 export {connectToPeers, broadcastLatest, initP2PServer, getSockets};

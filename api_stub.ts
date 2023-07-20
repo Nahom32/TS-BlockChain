@@ -30,3 +30,4 @@ const initHttpServer = ( myHttpPort: number ) => {
     });
 };
 initHttpServer(httpPort); // start the HTTP server for REST API calls and queries to
+initP2PServer(p2pPort);
