@@ -29,3 +29,4 @@ const initHttpServer = ( myHttpPort: number ) => {
         console.log('Listening http on port: ' + myHttpPort);
     });
 };
+initHttpServer(httpPort); // start the HTTP server for REST API calls and queries to
