@@ -1,4 +1,4 @@
-import WebSocket from 'ws';
+import {WebSocket} from 'ws';
 import {Server} from 'ws';
 import {calculateHashForBlock,generateNextBlock,replaceChain,isValidChain,getBlockChain,isValidBlockStructure,getLatestBlock,addBlockToChain} from './block_functions';
 import {Block} from './Block';

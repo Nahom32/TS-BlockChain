@@ -1,9 +1,10 @@
-import * as  bodyParser from 'body-parser';
+//import  bodyParser from 'body-parser';
 import express from 'express';
 import { Block } from './Block';
 import {generateNextBlock, getBlockChain} from './block_functions';
 import {connectToPeers, getSockets, initP2PServer} from './p2p';
-
+const bodyParser = require('body-parser');
+//const express = require('express');
 const httpPort: number =  3001;
 const p2pPort: number =  6001;
 const initHttpServer = ( myHttpPort: number ) => {
