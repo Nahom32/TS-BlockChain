@@ -1,15 +1,20 @@
 import sha256 from 'crypto-js/sha256';
 import { Block } from './Block';
 import {broadcastLatest} from './p2p';
-const calculate_hash = (index: number, previousHash: string|null, timestamp: number, data: string): string  =>{
+import { hexToBinary } from './hexToBinary';
+const calculate_hash = (index: number, previousHash: string|null, timestamp: number, data: string, difficulty:number, nonce:number): string  =>{
     if(typeof(previousHash)=='string')
-        return sha256(index + previousHash + timestamp + data).toString();
+        return sha256(index + previousHash + timestamp + data + difficulty + nonce).toString();
     else
         return sha256(index+''+timestamp+data).toString();
 }
+const BLOCK_GENERATION_INTERVAL: number = 10;
+
+// in blocks
+const DIFFICULTY_ADJUSTMENT_INTERVAL: number = 10;
 
 const genesisBlock = new Block(
-    0, '816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7', null, 1465154705, 'my genesis block!!'
+    0, '816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7', null, 1465154705, 'my genesis block!!',0,0
 );
 let blockchain: Block[] = [genesisBlock];
 const getLatestBlock =():Block=>{
@@ -17,15 +22,22 @@ const getLatestBlock =():Block=>{
 }
 const generateNextBlock = (blockData: string) => {
     const previousBlock: Block = getLatestBlock();
+    const difficulty: number = getDifficulty(getBlockChain());
+    console.log('difficulty: ' + difficulty);
     const nextIndex: number = previousBlock.index + 1;
-    const nextTimestamp: number = new Date().getTime() / 1000;
-    const nextHash: string = calculate_hash(nextIndex, previousBlock.hash, nextTimestamp, blockData);
-    const newBlock: Block = new Block(nextIndex, nextHash, previousBlock.hash, nextTimestamp, blockData);
+    const nextTimestamp: number = getCurrentTimestamp();
+    const newBlock: Block = findBlock(nextIndex, previousBlock.hash, nextTimestamp, blockData, difficulty);
+    addBlock(newBlock);
     broadcastLatest();
     return newBlock;
 };
+const hashMatchesDifficulty = (hash: string, difficulty: number): boolean => {
+    const hashInBinary: string = hexToBinary(hash);
+    const requiredPrefix: string = '0'.repeat(difficulty);
+    return hashInBinary.startsWith(requiredPrefix);
+};
 const calculateHashForBlock = (block:Block): string =>{
-    return calculate_hash(block.index,block.previousHash,block.timestamp,block.data);
+    return calculate_hash(block.index,block.previousHash,block.timestamp,block.data,block.difficulty,block.nonce);
 }
 const isGenesisBlock = (block:Block):boolean =>{
     return JSON.stringify(block) == JSON.stringify(genesisBlock);
@@ -79,5 +91,44 @@ const addBlockToChain = (newBlock: Block) => {
         return true;
     }
     return false;
+};
+const findBlock = (index: number, previousHash: string, timestamp: number, data: string, difficulty: number):Block=>{
+    let nonce = 0;
+    while (true) {
+        const hash: string = calculate_hash(index, previousHash, timestamp, data, difficulty, nonce);
+        if (hashMatchesDifficulty(hash, difficulty)) {
+            return new Block(index, hash, previousHash, timestamp, data, difficulty, nonce);
+        }
+        nonce++;
+    }
+
+}
+const getCurrentTimestamp = ():number => {
+    return Math.round(new Date().getTime() / 1000);
+};
+const getDifficulty =  (aBlockchain: Block[]):number =>{
+    const latestBlock: Block = aBlockchain[blockchain.length - 1];
+    if (latestBlock.index % DIFFICULTY_ADJUSTMENT_INTERVAL === 0 && latestBlock.index !== 0) {
+        return getAdjustedDifficulty(latestBlock, aBlockchain);
+    } else {
+        return latestBlock.difficulty;
+    }
+}
+const getAdjustedDifficulty = (latestBlock: Block, aBlockchain: Block[]) => {
+    const prevAdjustmentBlock: Block = aBlockchain[blockchain.length - DIFFICULTY_ADJUSTMENT_INTERVAL];
+    const timeExpected: number = BLOCK_GENERATION_INTERVAL * DIFFICULTY_ADJUSTMENT_INTERVAL;
+    const timeTaken: number = latestBlock.timestamp - prevAdjustmentBlock.timestamp;
+    if (timeTaken < timeExpected / 2) {
+        return prevAdjustmentBlock.difficulty + 1;
+    } else if (timeTaken > timeExpected * 2) {
+        return prevAdjustmentBlock.difficulty - 1;
+    } else {
+        return prevAdjustmentBlock.difficulty;
+    }
+};
+const addBlock = (newBlock: Block) => {
+    if (isValidBlock(newBlock, getLatestBlock())) {
+        blockchain.push(newBlock);
+    }
 };
 export {calculateHashForBlock,generateNextBlock,replaceChain,isValidChain,getBlockChain,isValidBlockStructure,getLatestBlock,addBlockToChain}
