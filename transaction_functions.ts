@@ -210,8 +210,9 @@ const toHexString = (byteArray: Iterable<any> | ArrayLike<any>): string => {
 };
 
 const getPublicKey = (aPrivateKey: string): string => {
-    return ec.keyFromPrivate(aPrivateKey, 'hex').getPublic().encode('hex');
-};
+    const ec = new ecdsa.ec('secp256k1'); // Replace with the appropriate curve.
+    return ec.keyFromPrivate(aPrivateKey, 'hex').getPublic().encode('hex', false);
+  };
 
 const isValidTxInStructure = (txIn: TxIn): boolean => {
     if (txIn == null) {
