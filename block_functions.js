@@ -138,3 +138,7 @@ const addBlock = (newBlock) => {
         blockchain.push(newBlock);
     }
 };
+const isValidTimestamp = (newBlock, previousBlock) => {
+    return (previousBlock.timestamp - 60 < newBlock.timestamp)
+        && newBlock.timestamp - 60 < getCurrentTimestamp();
+};
