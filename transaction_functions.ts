@@ -132,7 +132,12 @@ const getTxInAmount = (txIn: TxIn, aUnspentTxOuts: UnspentTxOut[]): number /*| u
 };
 
 const findUnspentTxOut = (transactionId: string, index: number, aUnspentTxOuts: UnspentTxOut[]): UnspentTxOut /*| undefined*/ => {
-    return aUnspentTxOuts.find((uTxO) => uTxO.txOutId === transactionId && uTxO.txOutIndex === index);
+    let value = aUnspentTxOuts.find((uTxO) => uTxO.txOutId === transactionId && uTxO.txOutIndex === index);
+    if(value != null && value != undefined){
+        return value;
+    }else{
+        return new UnspentTxOut('',0,'',0);
+    }
 };
 
 const getCoinbaseTransaction = (address: string, blockIndex: number): Transaction => {
